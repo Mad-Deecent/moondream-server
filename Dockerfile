@@ -29,7 +29,7 @@ ENV XDG_DATA_HOME=/data/.local/share
 
 # Run the bootstrap process to install all dependencies
 # This will complete when all dependencies are installed and the server starts
-RUN timeout 180 ./moondream_station --verbose || echo "Bootstrap completed or timed out"
+RUN timeout 120 ./moondream_station --verbose || echo "Bootstrap completed or timed out"
 RUN ls -la /data/.local/share/MoondreamStation/ && \
     ls -la /data/.local/share/MoondreamStation/py_versions/ && \
     ls -la /data/.local/share/MoondreamStation/.venv/
@@ -58,8 +58,8 @@ ENV XDG_DATA_HOME=/data/.local/share
 
 EXPOSE 2020
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:2020/health || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
+    CMD curl -f http://localhost:2020/v1 || exit 1
 
 # Run the application
 CMD ["./moondream_station"]

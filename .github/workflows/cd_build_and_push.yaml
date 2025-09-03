@@ -1,5 +1,5 @@
 name: Build and Push
-run-name: Build and Push ${{ github.sha }}
+run-name: Build and Push - ${{ github.actor }} - ${{ github.ref_name }}
 
 on:
   workflow_dispatch:
