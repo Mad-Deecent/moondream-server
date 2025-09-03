@@ -33,7 +33,7 @@ RUN ls -la /data/.local/share/MoondreamStation/ && \
     ls -la /data/.local/share/MoondreamStation/.venv/
 
 FROM ubuntu:22.04 AS deploy
-LABEL org.opencontainers.image.source https://github.com/Mad-Deecent/moondream-station-helm
+LABEL org.opencontainers.image.source=https://github.com/Mad-Deecent/moondream-station-helm
 RUN apt-get update && apt-get install -y \
     curl \
     ca-certificates \
