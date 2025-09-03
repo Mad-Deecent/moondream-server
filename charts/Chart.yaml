@@ -1,0 +1,17 @@
+apiVersion: v2
+name: moondream-station
+description: A Helm chart for Moondream Station vision-language model server
+type: application
+version: 0.1.0
+appVersion: "latest"
+keywords:
+  - ai
+  - vision
+  - language-model
+  - moondream
+home: https://moondream.ai/station
+sources:
+  - https://github.com/vikhyat/moondream
+maintainers:
+  - name: Your Team
+    email: team@yourcompany.com

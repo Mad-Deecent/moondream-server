@@ -1,0 +1,89 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: moondream-station
+  namespace: moondream
+  labels:
+    app: moondream-station
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: moondream-station
+  template:
+    metadata:
+      labels:
+        app: moondream-station
+    spec:
+      nodeSelector:
+        # Ensure deployment on GPU nodes
+        accelerator: nvidia-tesla-gpu
+      tolerations:
+        # Tolerate GPU node taints
+        - key: nvidia.com/gpu
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: moondream-station
+          image: moondream-station:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              name: http
+          resources:
+            requests:
+              cpu: 1000m
+              memory: 2Gi
+              nvidia.com/gpu: 1
+            limits:
+              cpu: 4000m
+              memory: 8Gi
+              nvidia.com/gpu: 1
+          env:
+            - name: HOME
+              value: "/data"
+            - name: XDG_DATA_HOME
+              value: "/data/.local/share"
+            - name: MOONDREAM_HOST
+              value: "0.0.0.0"
+            - name: MOONDREAM_PORT
+              value: "8080"
+          volumeMounts:
+            - name: moondream-data
+              mountPath: /data
+            - name: shm
+              mountPath: /dev/shm
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop:
+                - ALL
+      volumes:
+        - name: moondream-data
+          persistentVolumeClaim:
+            claimName: moondream-data-pvc
+        - name: shm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 2Gi
+      restartPolicy: Always

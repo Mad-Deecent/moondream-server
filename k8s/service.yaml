@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: moondream-station-service
+  namespace: moondream
+  labels:
+    app: moondream-station
+spec:
+  type: ClusterIP
+  selector:
+    app: moondream-station
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: moondream-station-external
+  namespace: moondream
+  labels:
+    app: moondream-station
+spec:
+  type: LoadBalancer
+  selector:
+    app: moondream-station
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+      protocol: TCP

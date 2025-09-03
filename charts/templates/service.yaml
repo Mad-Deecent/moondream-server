@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "moondream-station.fullname" . }}
+  labels:
+    {{- include "moondream-station.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.targetPort }}
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "moondream-station.selectorLabels" . | nindent 4 }}
+{{- if .Values.externalService.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "moondream-station.fullname" . }}-external
+  labels:
+    {{- include "moondream-station.labels" . | nindent 4 }}
+  {{- with .Values.externalService.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.externalService.type }}
+  ports:
+    - port: {{ .Values.externalService.port }}
+      targetPort: {{ .Values.externalService.targetPort }}
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "moondream-station.selectorLabels" . | nindent 4 }}
+{{- end }}

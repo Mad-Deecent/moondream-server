@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "moondream-station.fullname" . }}-config
+  labels:
+    {{- include "moondream-station.labels" . | nindent 4 }}
+data:
+  host: {{ .Values.config.host | quote }}
+  port: {{ .Values.config.port | quote }}
+  log_level: {{ .Values.config.logLevel | quote }}
+  max_concurrent_requests: {{ .Values.config.maxConcurrentRequests | quote }}
+  model_cache_dir: "/data/.local/share/MoondreamStation/models"
