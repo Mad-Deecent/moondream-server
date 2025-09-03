@@ -5,12 +5,14 @@
 replicaCount: 1
 
 image:
-  repository: moondream-station
+  repository: ghcr.io/mad-deecent/moondream-station-helm
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
   tag: "latest"
 
-imagePullSecrets: []
+imagePullSecrets:
+  []
+  # - name: ghcr-secret  # Uncomment if using private registry
 nameOverride: ""
 fullnameOverride: ""
 
@@ -42,7 +44,7 @@ securityContext:
 service:
   type: ClusterIP
   port: 8080
-  targetPort: 8080
+  targetPort: 2020
 
 # LoadBalancer service for external access
 externalService:
@@ -110,7 +112,7 @@ shm:
 # Application configuration
 config:
   host: "0.0.0.0"
-  port: 8080
+  port: 2020
   logLevel: "info"
   maxConcurrentRequests: 10
 
@@ -126,14 +128,14 @@ envFrom: []
 probes:
   readiness:
     enabled: true
-    path: /health
+    path: /v1 # API endpoint for health check
     initialDelaySeconds: 30
     periodSeconds: 10
     timeoutSeconds: 5
     failureThreshold: 3
   liveness:
     enabled: true
-    path: /health
+    path: /v1 # API endpoint for health check
     initialDelaySeconds: 60
     periodSeconds: 30
     timeoutSeconds: 10
@@ -146,7 +148,11 @@ autoscaling:
   targetCPUUtilizationPercentage: 80
   # targetMemoryUtilizationPercentage: 80
 
-nodeSelector: {}
+nodeSelector:
+  {}
+  # Example GPU node selection (uncomment and modify as needed):
+  # nvidia.com/gpu.memory: "12288"
+  # nvidia.com/gpu.product: "NVIDIA-GeForce-RTX-3060"
 
 tolerations: []
 

@@ -4,10 +4,10 @@
 set -e
 
 # Configuration
-IMAGE_NAME="moondream-station"
+IMAGE_NAME="mad-deecent/moondream-station-helm"
 IMAGE_TAG="${IMAGE_TAG:-latest}"
-REGISTRY="${REGISTRY:-localhost:5000}"  # Update this to your registry
-NAMESPACE="moondream"
+REGISTRY="${REGISTRY:-ghcr.io}"  # GitHub Container Registry
+NAMESPACE="${NAMESPACE:-moondream}"
 
 # Colors for output
 RED='\033[0;31m'
@@ -37,36 +37,38 @@ build_image() {
     fi
     
     # Tag for registry
-    if [ "$REGISTRY" != "localhost:5000" ]; then
-        docker tag "${IMAGE_NAME}:${IMAGE_TAG}" "${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}"
-    fi
+    docker tag "${IMAGE_NAME}:${IMAGE_TAG}" "${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}"
     
     log "Image built successfully: ${IMAGE_NAME}:${IMAGE_TAG}"
 }
 
 # Function to push the image
 push_image() {
-    if [ "$REGISTRY" != "localhost:5000" ]; then
-        log "Pushing image to registry: ${REGISTRY}"
-        
-        if ! docker push "${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}"; then
+    log "Pushing image to registry: ${REGISTRY}"
+    
+    # Check if we're pushing to GHCR and provide authentication guidance
+    if [[ "$REGISTRY" == "ghcr.io" ]]; then
+        log "Pushing to GitHub Container Registry..."
+        log "Make sure you're authenticated with GHCR (see --help for authentication info)"
+    fi
+    
+    if ! docker push "${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}"; then
+        if [[ "$REGISTRY" == "ghcr.io" ]]; then
+            error "Failed to push to GHCR. Make sure you're authenticated and have push permissions."
+        else
             error "Failed to push image to registry"
         fi
-        
-        log "Image pushed successfully"
-    else
-        warn "Skipping push for local registry"
     fi
+    
+    log "Image pushed successfully"
 }
 
 # Function to deploy using kubectl
 deploy_kubectl() {
     log "Deploying using kubectl..."
     
-    # Update image in deployment if using registry
-    if [ "$REGISTRY" != "localhost:5000" ]; then
-        sed -i.bak "s|image: moondream-station:latest|image: ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}|g" k8s/deployment.yaml
-    fi
+    # Update image in deployment
+    sed -i.bak "s|image: moondream-station:latest|image: ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}|g" k8s/deployment.yaml
     
     # Apply manifests
     if ! kubectl apply -k k8s/; then
@@ -85,12 +87,9 @@ deploy_kubectl() {
 deploy_helm() {
     log "Deploying using Helm..."
     
-    local helm_args=""
-    if [ "$REGISTRY" != "localhost:5000" ]; then
-        helm_args="--set image.repository=${REGISTRY}/${IMAGE_NAME} --set image.tag=${IMAGE_TAG}"
-    fi
+    local helm_args="--set image.repository=${REGISTRY}/${IMAGE_NAME} --set image.tag=${IMAGE_TAG}"
     
-    if ! helm upgrade --install moondream-station ../charts/moondream \
+    if ! helm upgrade --install moondream-station ./charts \
         --namespace ${NAMESPACE} \
         --create-namespace \
         ${helm_args}; then
@@ -129,7 +128,7 @@ usage() {
     echo "  status      Check deployment status"
     echo ""
     echo "Options:"
-    echo "  -r, --registry REGISTRY    Container registry (default: localhost:5000)"
+    echo "  -r, --registry REGISTRY    Container registry (default: ghcr.io)"
     echo "  -t, --tag TAG              Image tag (default: latest)"
     echo "  -n, --namespace NAMESPACE  Kubernetes namespace (default: moondream)"
     echo "  -h, --help                 Show this help message"
@@ -140,8 +139,15 @@ usage() {
     echo ""
     echo "Examples:"
     echo "  $0 build"
-    echo "  $0 -r my-registry.com -t v1.0.0 all"
+    echo "  $0 -t v1.0.0 all"
     echo "  $0 helm"
+    echo "  $0 -r my-registry.com -t v1.0.0 all"
+    echo ""
+    echo "GHCR Authentication (for private registries):"
+    echo "  1. Create a GitHub Personal Access Token with 'packages:write' scope"
+    echo "  2. Export your token: export GITHUB_TOKEN=your_token_here"
+    echo "  3. Login: echo \$GITHUB_TOKEN | docker login ghcr.io -u YOUR_USERNAME --password-stdin"
+    echo "  Note: Never commit tokens to version control!"
 }
 
 # Parse command line arguments
@@ -181,6 +187,11 @@ fi
 # Check if we're in the right directory
 if [ ! -f "Dockerfile" ]; then
     error "Dockerfile not found. Please run this script from the moondream directory."
+fi
+
+# Security check: warn if sensitive environment variables are being used inappropriately
+if [[ -n "$GITHUB_TOKEN" && ${#GITHUB_TOKEN} -gt 20 ]] || [[ -n "$GH_PAT" && ${#GH_PAT} -gt 20 ]]; then
+    warn "GitHub token detected in environment. Ensure this is intentional and never commit tokens to version control."
 fi
 
 # Check prerequisites
