@@ -27,7 +27,9 @@ USER moondream
 ENV HOME=/data
 ENV XDG_DATA_HOME=/data/.local/share
 
-RUN timeout 600 ./moondream_station --verbose || true
+# Run the bootstrap process to install all dependencies
+# This will complete when all dependencies are installed and the server starts
+RUN timeout 180 ./moondream_station --verbose || echo "Bootstrap completed or timed out"
 RUN ls -la /data/.local/share/MoondreamStation/ && \
     ls -la /data/.local/share/MoondreamStation/py_versions/ && \
     ls -la /data/.local/share/MoondreamStation/.venv/
