@@ -85,8 +85,7 @@ gpu:
   # Number of GPUs to request
   count: 1
   # GPU type constraint (optional)
-  nodeSelector:
-    accelerator: nvidia-tesla-gpu
+  nodeSelector: {}
   # Tolerate GPU node taints
   tolerations:
     - key: nvidia.com/gpu
@@ -97,7 +96,7 @@ gpu:
 persistence:
   enabled: true
   # Storage class name
-  storageClass: "fast-ssd"
+  storageClass: ""
   accessMode: ReadWriteOnce
   size: 10Gi
   # Existing PVC name (if you want to use an existing one)
