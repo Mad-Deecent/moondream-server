@@ -29,12 +29,16 @@ ENV XDG_DATA_HOME=/data/.local/share
 
 # Run the bootstrap process to install all dependencies
 # This will complete when all dependencies are installed and the server starts
-RUN timeout 120 ./moondream_station --verbose || echo "Bootstrap completed or timed out"
+RUN timeout 120 ./moondream_station --verbose || echo "Bootstrap completed or timed out" && \
+    # Clean up cache and temp files to save space
+    rm -rf /tmp/* && \
+    find /data/.local/share/MoondreamStation -name "*.pyc" -delete && \
+    find /data/.local/share/MoondreamStation -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
 RUN ls -la /data/.local/share/MoondreamStation/ && \
     ls -la /data/.local/share/MoondreamStation/py_versions/ && \
     ls -la /data/.local/share/MoondreamStation/.venv/
 
-FROM ubuntu:22.04 AS deploy
+FROM ubuntu:22.04-slim AS deploy
 LABEL org.opencontainers.image.source=https://github.com/Mad-Deecent/moondream-station-helm
 RUN apt-get update && apt-get install -y \
     curl \
