@@ -71,3 +71,14 @@ Create the name of the PVC to use
 {{- printf "%s-data" (include "moondream-station.fullname" .) }}
 {{- end }}
 {{- end }}
+
+{{/*
+Create the name of the model cache PVC to use
+*/}}
+{{- define "moondream-station.modelPvcName" -}}
+{{- if .Values.modelCache.existingClaim }}
+{{- .Values.modelCache.existingClaim }}
+{{- else }}
+{{- printf "%s-models" (include "moondream-station.fullname" .) }}
+{{- end }}
+{{- end }}

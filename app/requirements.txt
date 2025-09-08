@@ -1,0 +1,19 @@
+# Core dependencies
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-multipart==0.0.6
+
+# Moondream dependencies
+transformers==4.36.0
+torch>=2.0.0
+pillow>=9.0.0
+einops>=0.6.0
+
+# Optional: for better image processing
+pyvips-binary>=0.1.0
+pyvips>=2.2.0
+
+# Optional: for GPU acceleration
+accelerate>=0.24.0
+
+

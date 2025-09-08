@@ -1,0 +1,78 @@
+{{- if .Values.modelCache.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "moondream-station.fullname" . }}-model-download
+  labels:
+    {{- include "moondream-station.labels" . | nindent 4 }}
+    app.kubernetes.io/component: model-download
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "-1"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  template:
+    metadata:
+      labels:
+        {{- include "moondream-station.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: model-download
+    spec:
+      restartPolicy: OnFailure
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: model-downloader
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - python
+            - -c
+            - |
+              import os
+              from transformers import AutoModelForCausalLM
+              
+              cache_dir = "/models/.cache/huggingface"
+              os.makedirs(cache_dir, exist_ok=True)
+              os.environ["HF_HOME"] = cache_dir
+              
+              print("Downloading Moondream model...")
+              AutoModelForCausalLM.from_pretrained(
+                  "vikhyatk/moondream2",
+                  revision="{{ .Values.modelCache.modelRevision | default "2025-06-21" }}",
+                  trust_remote_code=True,
+                  cache_dir=cache_dir,
+              )
+              print("Model downloaded successfully!")
+          env:
+            - name: HF_HOME
+              value: "/models/.cache/huggingface"
+            - name: TRANSFORMERS_CACHE
+              value: "/models/.cache/huggingface/transformers"
+            - name: HF_HUB_CACHE
+              value: "/models/.cache/huggingface/hub"
+          volumeMounts:
+            - name: model-cache
+              mountPath: /models
+      volumes:
+        - name: model-cache
+          persistentVolumeClaim:
+            claimName: {{ include "moondream-station.modelPvcName" . }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

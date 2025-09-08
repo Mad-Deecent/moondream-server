@@ -1,69 +1,44 @@
-FROM ubuntu:22.04 AS builder
+FROM python:3.11-slim
 
-# Install build dependencies
-RUN apt-get update && apt-get install -y \
-    curl \
-    ca-certificates \
-    wget \
-    bash \
-    && rm -rf /var/lib/apt/lists/*
-
-
-WORKDIR /app
-
-# Download and extract Moondream Station
-RUN curl -L "https://depot.moondream.ai/station/md_station_ubuntu.tar.gz" -o md_station_ubuntu.tar.gz \
-    && tar --no-same-owner -xzf md_station_ubuntu.tar.gz \
-    && rm md_station_ubuntu.tar.gz \
-    && chmod +x moondream_station
-
-RUN useradd -m -u 1000 moondream
-RUN mkdir -p /data/.local/share/MoondreamStation \
-    && chown -R moondream:moondream /data \
-    && chown -R moondream:moondream /app
-
-USER moondream
-
-ENV HOME=/data
-ENV XDG_DATA_HOME=/data/.local/share
-
-# Run the bootstrap process to install all dependencies
-# This will complete when all dependencies are installed and the server starts
-RUN timeout 120 ./moondream_station --verbose || echo "Bootstrap completed or timed out" && \
-    # Clean up cache and temp files to save space
-    rm -rf /tmp/* && \
-    find /data/.local/share/MoondreamStation -name "*.pyc" -delete && \
-    find /data/.local/share/MoondreamStation -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
-RUN ls -la /data/.local/share/MoondreamStation/ && \
-    ls -la /data/.local/share/MoondreamStation/py_versions/ && \
-    ls -la /data/.local/share/MoondreamStation/.venv/
-
-FROM ubuntu:22.04-slim AS deploy
 LABEL org.opencontainers.image.source=https://github.com/Mad-Deecent/moondream-station-helm
+
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     curl \
     ca-certificates \
+    libglib2.0-0 \
+    libgl1 \
+    libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
+# Create non-root user
 RUN useradd -m -u 1000 moondream
 
 WORKDIR /app
-RUN mkdir -p /data/.local/share/MoondreamStation \
-    && chown -R moondream:moondream /data \
-    && chown -R moondream:moondream /app
 
-COPY --from=builder --chown=moondream:moondream /app/ /app/
-COPY --from=builder --chown=moondream:moondream /data/.local/share/MoondreamStation/ /data/.local/share/MoondreamStation/
+# Copy requirements and install Python dependencies
+COPY app/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY app/ ./app/
+
+# Create cache directory for models
+RUN mkdir -p /root/.cache/huggingface && \
+    chown -R moondream:moondream /app && \
+    chown -R moondream:moondream /root/.cache
 
 USER moondream
 
-ENV HOME=/data
-ENV XDG_DATA_HOME=/data/.local/share
+# Expose port
+EXPOSE 8080
 
-EXPOSE 2020
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
-    CMD curl -f http://localhost:2020/v1 || exit 1
+# Set environment variables
+ENV RELOAD=false
 
-# Run the application
-CMD ["./moondream_station"]
+# Run the FastAPI application
+CMD ["python", "app/app.py"]

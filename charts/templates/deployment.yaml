@@ -56,13 +56,7 @@ spec:
               containerPort: {{ .Values.config.port }}
               protocol: TCP
           env:
-            - name: HOME
-              value: "/data"
-            - name: XDG_DATA_HOME
-              value: "/data/.local/share"
-            - name: MOONDREAM_HOST
-              value: {{ .Values.config.host | quote }}
-            - name: MOONDREAM_PORT
+            - name: PORT
               value: {{ .Values.config.port | quote }}
             {{- range $key, $value := .Values.env }}
             - name: {{ $key }}
@@ -99,6 +93,10 @@ spec:
             - name: moondream-data
               mountPath: /data
             {{- end }}
+            {{- if .Values.modelCache.enabled }}
+            - name: model-cache
+              mountPath: /root/.cache/huggingface
+            {{- end }}
             {{- if .Values.shm.enabled }}
             - name: shm
               mountPath: /dev/shm
@@ -108,6 +106,11 @@ spec:
         - name: moondream-data
           persistentVolumeClaim:
             claimName: {{ include "moondream-station.pvcName" . }}
+        {{- end }}
+        {{- if .Values.modelCache.enabled }}
+        - name: model-cache
+          persistentVolumeClaim:
+            claimName: {{ include "moondream-station.modelPvcName" . }}
         {{- end }}
         {{- if .Values.shm.enabled }}
         - name: shm

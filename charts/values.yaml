@@ -44,7 +44,7 @@ securityContext:
 service:
   type: ClusterIP
   port: 8080
-  targetPort: 2020
+  targetPort: 8080
 
 # LoadBalancer service for external access
 externalService:
@@ -94,7 +94,7 @@ gpu:
       operator: Exists
       effect: NoSchedule
 
-# Persistent storage for models and data
+# Persistent storage for application data
 persistence:
   enabled: true
   # Storage class name
@@ -104,6 +104,14 @@ persistence:
   # Existing PVC name (if you want to use an existing one)
   existingClaim: ""
 
+# Model cache storage (separate PVC for pre-downloaded models)
+modelCache:
+  enabled: true
+  accessMode: ReadWriteMany # RWM for rolling deployments
+  size: 20Gi
+  existingClaim: ""
+  modelRevision: "2025-06-21" # Latest version
+
 # Shared memory for ML workloads
 shm:
   enabled: true
@@ -112,7 +120,7 @@ shm:
 # Application configuration
 config:
   host: "0.0.0.0"
-  port: 2020
+  port: 8080
   logLevel: "info"
   maxConcurrentRequests: 10
 
@@ -128,14 +136,14 @@ envFrom: []
 probes:
   readiness:
     enabled: true
-    path: /v1 # API endpoint for health check
+    path: /health
     initialDelaySeconds: 30
     periodSeconds: 10
     timeoutSeconds: 5
     failureThreshold: 3
   liveness:
     enabled: true
-    path: /v1 # API endpoint for health check
+    path: /health
     initialDelaySeconds: 60
     periodSeconds: 30
     timeoutSeconds: 10
