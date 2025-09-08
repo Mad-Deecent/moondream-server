@@ -7,9 +7,8 @@ RUN apt-get update && apt-get install -y \
     curl \
     ca-certificates \
     libglib2.0-0 \
-    libgl1-mesa-glx \
+    libgl1 \
     libgomp1 \
-    libglib2.0-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user
@@ -42,4 +41,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
 ENV RELOAD=false
 
 # Run the FastAPI application
-CMD ["python", "-m", "app.app"]
+CMD ["python", "app/app.py"]
