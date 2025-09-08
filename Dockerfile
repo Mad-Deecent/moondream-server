@@ -7,7 +7,7 @@ RUN apt-get update && apt-get install -y \
     curl \
     ca-certificates \
     libglib2.0-0 \
-    libgl1 \
+    libgl1-mesa-glx \
     libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
