@@ -7,7 +7,7 @@ This replaces the complex Moondream Station binary with a simple, maintainable P
 ## Project Structure
 
 ```
-moondream-station-helm/
+moondream-server/
 ├── app/                   # FastAPI application
 │   ├── __init__.py        # Package initialization
 │   ├── app.py             # Main FastAPI application
@@ -139,8 +139,8 @@ helm install moondream-station oci://ghcr.io/mad-deecent/charts/moondream-statio
 Or install from source:
 
 ```bash
-git clone https://github.com/Mad-Deecent/moondream-station-helm.git
-cd moondream-station-helm
+git clone https://github.com/Mad-Deecent/moondream-server.git
+cd moondream-server
 helm install moondream-station ./charts --namespace moondream --create-namespace
 ```
 
