@@ -9,7 +9,7 @@ from PIL import Image
 import io
 
 # Test configuration
-BASE_URL = "http://localhost:49639"
+BASE_URL = "http://localhost:8080"
 TEST_IMAGE_URL = "https://images.unsplash.com/photo-1518717758536-85ae29035b6d?w=400"  # Dog image
 
 def create_test_image():

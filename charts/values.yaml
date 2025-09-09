@@ -99,7 +99,7 @@ persistence:
   # Storage class name
   storageClass: "nfs-nvme"
   accessMode: ReadWriteMany # RWM for rolling deployments and model sharing
-  size: 20Gi
+  size: 10Gi
   # Existing PVC name (if you want to use an existing one)
   existingClaim: ""
 

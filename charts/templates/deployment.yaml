@@ -54,7 +54,7 @@ spec:
           - -c
           - |
             echo "Waiting for model cache to be populated..."
-            while [ ! -d "/models/models/.cache/huggingface/models--vikhyatk--moondream2" ] || [ -z "$(ls -A /models/models/.cache/huggingface/models--vikhyatk--moondream2 2>/dev/null)" ]; do
+            while [ -z "$(ls -A /models 2>/dev/null)" ]; do
               echo "Model cache not ready, waiting 10 seconds..."
               sleep 10
             done

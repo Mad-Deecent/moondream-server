@@ -35,7 +35,7 @@ spec:
               from huggingface_hub import snapshot_download
               import os
               
-              cache_dir = '/models/models/.cache/huggingface'
+              cache_dir = '/models'
               os.makedirs(cache_dir, exist_ok=True)
               os.environ['HF_HOME'] = cache_dir
               

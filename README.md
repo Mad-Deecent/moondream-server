@@ -24,23 +24,6 @@ moondream-station-helm/
 
 ## Quick Start
 
-### Using Makefile (Recommended)
-
-```bash
-# Show all available commands
-make help
-
-# Install dependencies and run locally
-make install
-make run
-
-# Or run in Docker with volume mounting (models cached locally)
-make docker-run
-
-# Run with hot reloading for development
-make run-dev
-```
-
 ### Manual Commands
 
 #### Run with Docker
@@ -86,7 +69,7 @@ The model pre-loading is configured under the unified `persistence` section in `
 ```yaml
 persistence:
   enabled: true
-  storageClass: "nfs-nvme" # Storage class for PVC
+  storageClass: "" # Storage class for PVC
   accessMode: ReadWriteMany # RWM for rolling deployments and model sharing
   size: 20Gi
   existingClaim: "" # Optional: use existing PVC instead of creating new one
@@ -142,9 +125,6 @@ Run the comprehensive test suite:
 ```bash
 # Test all endpoints with a real image
 python app/test_api.py
-
-# Or use the Makefile
-make test
 ```
 
 The test suite downloads a real image from Unsplash and tests all API endpoints to ensure proper functionality.
