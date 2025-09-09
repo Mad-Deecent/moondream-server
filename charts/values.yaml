@@ -155,9 +155,9 @@ autoscaling:
   # targetMemoryUtilizationPercentage: 80
 
 nodeSelector:
-  nvidia.com/gpu.product: "GRID-P40-1A"
+  # nvidia.com/gpu.product: "GRID-P40-1A"
   # Example GPU node selection (uncomment and modify as needed):
-  # nvidia.com/gpu.memory: "12288"
+  nvidia.com/gpu.memory: "12288"
   # nvidia.com/gpu.product: "NVIDIA-GeForce-RTX-3060"
 
 tolerations: []
