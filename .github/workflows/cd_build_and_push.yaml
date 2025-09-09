@@ -8,7 +8,13 @@ on:
         description: "Target to build and push"
         required: true
         default: "latest"
-
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "**"
+      - "!charts/**"
+      - "!README.md"
   push:
     branches:
       - main
@@ -49,9 +55,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GH_TOKEN }}
 
-      - name: Semantic Version
+      - name: Pre-release Semantic Version
         uses: paulhatch/semantic-version@v5.4.0
-        id: semantic-version
+        id: semantic-version-pre
+        if: github.event_name == 'pull_request'
         with:
           tag_prefix: "v"
           major_pattern: "(MAJOR)"
@@ -62,7 +69,7 @@ jobs:
           # A string which indicates the flags used by the `minor_pattern` regular expression. Supported flags: idgs
           minor_regexp_flags: ""
           # A string to determine the format of the version output
-          version_format: "${major}.${minor}.${patch}"
+          version_format: "${major}.${minor}.${patch}-prerelease${increment}"
           # Named version, will be used as suffix for name version tag
           namespace: moondream-station
           # If this is set to true, *every* commit will be treated as a new version.
@@ -80,6 +87,27 @@ jobs:
           debug: false
           # If true, the branch will be used to select the maximum version.
           version_from_branch: false
+      
+      
+      - name: Post-release Semantic Version
+        uses: paulhatch/semantic-version@v5.4.0
+        id: semantic-version-post
+        if: github.event_name == 'push'
+        with:
+          tag_prefix: "v"
+          major_pattern: "(MAJOR)"
+          major_regexp_flags: ""
+          minor_pattern: "(MINOR)"
+          minor_regexp_flags: ""
+          version_format: "${major}.${minor}.${patch}"
+          namespace: moondream-station
+          bump_each_commit: false
+          bump_each_commit_patch_pattern: ""
+          search_commit_body: false
+          user_format_type: "csv"
+          enable_prerelease_mode: false
+          debug: false
+          version_from_branch: false
 
       - name: Extract Docker metadata
         id: meta
@@ -89,7 +117,8 @@ jobs:
           labels: |
             org.opencontainers.image.created={{commit_date 'YYYY-MM-DDTHH:mm:ss.SSS[Z]'}}
           tags: |
-            type=raw,value=${{ steps.semantic-version.outputs.version }},enable={{is_default_branch}}
+            type=raw,value=${{ steps.semantic-version-pre.outputs.version }},enable={{is_not_default_branch}}
+            type=raw,value=${{ steps.semantic-version-post.outputs.version }},enable={{is_default_branch}}
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push Docker image
