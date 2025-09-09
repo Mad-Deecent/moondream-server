@@ -1,6 +1,6 @@
 FROM python:3.11-slim
 
-LABEL org.opencontainers.image.source=https://github.com/Mad-Deecent/moondream-station-helm
+LABEL org.opencontainers.image.source=https://github.com/Mad-Deecent/moondream-server
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
