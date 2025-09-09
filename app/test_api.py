@@ -7,6 +7,7 @@ import requests
 import json
 from PIL import Image
 import io
+import time
 
 # Test configuration
 BASE_URL = "http://localhost:8080"
@@ -54,8 +55,12 @@ def test_caption():
         files = {"image": ("test.jpg", img_bytes, "image/jpeg")}
         data = {"length": "short"}
         
+        start_time = time.time()
         response = requests.post(f"{BASE_URL}/v1/caption", files=files, data=data)
+        end_time = time.time()
+        
         print(f"Status: {response.status_code}")
+        print(f"Inference time: {end_time - start_time:.2f}s")
         if response.status_code == 200:
             print(f"Caption: {response.json()['caption']}")
         else:
@@ -73,8 +78,12 @@ def test_query():
         files = {"image": ("test.jpg", img_bytes, "image/jpeg")}
         data = {"question": "This is an animal named Gerty. Describe Gerty and what it might be feeling."}
         
+        start_time = time.time()
         response = requests.post(f"{BASE_URL}/v1/query", files=files, data=data)
+        end_time = time.time()
+        
         print(f"Status: {response.status_code}")
+        print(f"Inference time: {end_time - start_time:.2f}s")
         if response.status_code == 200:
             print(f"Answer: {response.json()['answer']}")
         else:
@@ -92,8 +101,12 @@ def test_detect():
         files = {"image": ("test.jpg", img_bytes, "image/jpeg")}
         data = {"object_name": "dog"}
         
+        start_time = time.time()
         response = requests.post(f"{BASE_URL}/v1/detect", files=files, data=data)
+        end_time = time.time()
+        
         print(f"Status: {response.status_code}")
+        print(f"Inference time: {end_time - start_time:.2f}s")
         if response.status_code == 200:
             print(f"Objects: {response.json()['objects']}")
         else:
@@ -111,8 +124,12 @@ def test_point():
         files = {"image": ("test.jpg", img_bytes, "image/jpeg")}
         data = {"object_name": "rectangle"}
         
+        start_time = time.time()
         response = requests.post(f"{BASE_URL}/v1/point", files=files, data=data)
+        end_time = time.time()
+        
         print(f"Status: {response.status_code}")
+        print(f"Inference time: {end_time - start_time:.2f}s")
         if response.status_code == 200:
             print(f"Points: {response.json()['points']}")
         else:

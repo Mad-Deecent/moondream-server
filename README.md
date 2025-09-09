@@ -8,7 +8,7 @@ This replaces the complex Moondream Station binary with a simple, maintainable P
 
 ```
 moondream-station-helm/
-├── app/                    # FastAPI application
+├── app/                   # FastAPI application
 │   ├── __init__.py        # Package initialization
 │   ├── app.py             # Main FastAPI application
 │   ├── requirements.txt   # Python dependencies
