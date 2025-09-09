@@ -1,6 +1,6 @@
-# Moondream FastAPI Service
+# Moondream Server
 
-A lightweight FastAPI wrapper around the Moondream transformers implementation, providing clean REST API endpoints for vision-language model capabilities.
+A lightweight wrapper around the Moondream2 transformers implementation, providing clean REST API endpoints for vision-language model capabilities.
 
 This replaces the complex Moondream Station binary with a simple, maintainable Python service that exposes the core Moondream capabilities through a REST API.
 
