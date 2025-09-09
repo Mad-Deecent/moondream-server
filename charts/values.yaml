@@ -7,7 +7,6 @@ replicaCount: 1
 image:
   repository: ghcr.io/mad-deecent/moondream-station-helm
   pullPolicy: Always
-  # Overrides the image tag whose default is the chart appVersion.
   tag: "latest"
 
 imagePullSecrets:
@@ -94,23 +93,22 @@ gpu:
       operator: Exists
       effect: NoSchedule
 
-# Persistent storage for application data
+# Persistent storage for application data and models
 persistence:
   enabled: true
   # Storage class name
-  storageClass: ""
-  accessMode: ReadWriteOnce
-  size: 10Gi
+  storageClass: "nfs-nvme"
+  accessMode: ReadWriteMany # RWM for rolling deployments and model sharing
+  size: 20Gi
   # Existing PVC name (if you want to use an existing one)
   existingClaim: ""
 
-# Model cache storage (separate PVC for pre-downloaded models)
-modelCache:
-  enabled: true
-  accessMode: ReadWriteMany # RWM for rolling deployments
-  size: 20Gi
-  existingClaim: ""
-  modelRevision: "2025-06-21" # Latest version
+  # Creates a job to download the model to the PVC before starting pods.
+  # Prevents startup delay when pods move between nodes.
+  modelCache:
+    enabled: true # Download models to the PVC
+    modelRevision: "2025-06-21" # Latest model version
+    waitForCache: true # Wait for model download job to complete before starting pods
 
 # Shared memory for ML workloads
 shm:
@@ -157,7 +155,7 @@ autoscaling:
   # targetMemoryUtilizationPercentage: 80
 
 nodeSelector:
-  {}
+  nvidia.com/gpu.product: "GRID-P40-1A"
   # Example GPU node selection (uncomment and modify as needed):
   # nvidia.com/gpu.memory: "12288"
   # nvidia.com/gpu.product: "NVIDIA-GeForce-RTX-3060"

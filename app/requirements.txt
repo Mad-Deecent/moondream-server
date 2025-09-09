@@ -5,7 +5,7 @@ python-multipart==0.0.6
 
 # Moondream dependencies
 transformers>=4.56.0
-torch>=2.0.0
+torch>=2.0.0+cu121 --index-url https://download.pytorch.org/whl/cu121
 pillow>=9.0.0
 einops>=0.6.0
 

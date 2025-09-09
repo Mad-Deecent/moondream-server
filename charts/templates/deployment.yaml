@@ -45,6 +45,24 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      {{- if and .Values.persistence.enabled .Values.persistence.modelCache.enabled .Values.persistence.modelCache.waitForCache }}
+      initContainers:
+        - name: wait-for-models
+          image: busybox:1.35
+          command:
+          - sh
+          - -c
+          - |
+            echo "Waiting for model cache to be populated..."
+            while [ ! -d "/models/models/.cache/huggingface/models--vikhyatk--moondream2" ] || [ -z "$(ls -A /models/models/.cache/huggingface/models--vikhyatk--moondream2 2>/dev/null)" ]; do
+              echo "Model cache not ready, waiting 10 seconds..."
+              sleep 10
+            done
+            echo "Model cache is ready!"
+          volumeMounts:
+            - name: moondream-data
+              mountPath: /models
+      {{- end }}
       containers:
         - name: {{ .Chart.Name }}
           securityContext:
@@ -92,10 +110,9 @@ spec:
             {{- if .Values.persistence.enabled }}
             - name: moondream-data
               mountPath: /data
-            {{- end }}
-            {{- if .Values.modelCache.enabled }}
-            - name: model-cache
+            - name: moondream-data
               mountPath: /root/.cache/huggingface
+              subPath: models
             {{- end }}
             {{- if .Values.shm.enabled }}
             - name: shm
@@ -105,12 +122,7 @@ spec:
         {{- if .Values.persistence.enabled }}
         - name: moondream-data
           persistentVolumeClaim:
-            claimName: {{ include "moondream-station.pvcName" . }}
-        {{- end }}
-        {{- if .Values.modelCache.enabled }}
-        - name: model-cache
-          persistentVolumeClaim:
-            claimName: {{ include "moondream-station.modelPvcName" . }}
+            claimName: {{ .Values.persistence.existingClaim | default (printf "%s-data" (include "moondream-station.fullname" .)) }}
         {{- end }}
         {{- if .Values.shm.enabled }}
         - name: shm

@@ -9,17 +9,30 @@ from PIL import Image
 import io
 
 # Test configuration
-BASE_URL = "http://localhost:8080"
+BASE_URL = "http://localhost:49639"
 TEST_IMAGE_URL = "https://images.unsplash.com/photo-1518717758536-85ae29035b6d?w=400"  # Dog image
 
 def create_test_image():
-    """Create a simple test image"""
-    # Create a simple colored rectangle as test image
-    img = Image.new('RGB', (200, 200), color='red')
-    img_bytes = io.BytesIO()
-    img.save(img_bytes, format='JPEG')
-    img_bytes.seek(0)
-    return img_bytes
+    """Download and prepare the test image"""
+    try:
+        # Download the test image from URL
+        response = requests.get(TEST_IMAGE_URL)
+        response.raise_for_status()
+        
+        # Open the image and convert to bytes
+        img = Image.open(io.BytesIO(response.content))
+        img_bytes = io.BytesIO()
+        img.save(img_bytes, format='JPEG')
+        img_bytes.seek(0)
+        return img_bytes
+    except Exception as e:
+        print(f"Failed to download test image: {e}")
+        # Fallback to a simple colored rectangle
+        img = Image.new('RGB', (200, 200), color='red')
+        img_bytes = io.BytesIO()
+        img.save(img_bytes, format='JPEG')
+        img_bytes.seek(0)
+        return img_bytes
 
 def test_health():
     """Test health endpoint"""
@@ -58,7 +71,7 @@ def test_query():
     try:
         img_bytes = create_test_image()
         files = {"image": ("test.jpg", img_bytes, "image/jpeg")}
-        data = {"question": "What color is this image?"}
+        data = {"question": "This is an animal named Gerty. Describe Gerty and what it might be feeling."}
         
         response = requests.post(f"{BASE_URL}/v1/query", files=files, data=data)
         print(f"Status: {response.status_code}")
@@ -77,7 +90,7 @@ def test_detect():
     try:
         img_bytes = create_test_image()
         files = {"image": ("test.jpg", img_bytes, "image/jpeg")}
-        data = {"object_name": "rectangle"}
+        data = {"object_name": "dog"}
         
         response = requests.post(f"{BASE_URL}/v1/detect", files=files, data=data)
         print(f"Status: {response.status_code}")

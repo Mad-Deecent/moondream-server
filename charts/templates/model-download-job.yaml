@@ -1,4 +1,4 @@
-{{- if .Values.modelCache.enabled }}
+{{- if and .Values.persistence.enabled .Values.persistence.modelCache.enabled }}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -6,10 +6,7 @@ metadata:
   labels:
     {{- include "moondream-station.labels" . | nindent 4 }}
     app.kubernetes.io/component: model-download
-  annotations:
-    helm.sh/hook: pre-install,pre-upgrade
-    helm.sh/hook-weight: "-1"
-    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+  annotations: {}
 spec:
   template:
     metadata:
@@ -26,29 +23,33 @@ spec:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
         - name: model-downloader
-          securityContext:
-            {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          image: python:3.11-slim
+          imagePullPolicy: IfNotPresent
           command:
-            - python
+            - sh
             - -c
             - |
+              pip install --no-cache-dir --target /tmp/packages huggingface_hub transformers
+              export PYTHONPATH=/tmp/packages:$PYTHONPATH
+              python - << 'PY'
+              from huggingface_hub import snapshot_download
               import os
-              from transformers import AutoModelForCausalLM
               
-              cache_dir = "/models/.cache/huggingface"
+              cache_dir = '/models/models/.cache/huggingface'
               os.makedirs(cache_dir, exist_ok=True)
-              os.environ["HF_HOME"] = cache_dir
+              os.environ['HF_HOME'] = cache_dir
               
-              print("Downloading Moondream model...")
-              AutoModelForCausalLM.from_pretrained(
-                  "vikhyatk/moondream2",
-                  revision="{{ .Values.modelCache.modelRevision | default "2025-06-21" }}",
-                  trust_remote_code=True,
-                  cache_dir=cache_dir,
+              print('Downloading Moondream model...')
+              snapshot_download(
+                  repo_id="vikhyatk/moondream2",
+                  revision='{{ .Values.persistence.modelCache.modelRevision | default "2025-06-21" }}',
+                  local_dir=None,
+                  local_dir_use_symlinks=False,
+                  token=None,
+                  ignore_patterns=["*.msgpack"]
               )
-              print("Model downloaded successfully!")
+              print('Model downloaded successfully!')
+              PY
           env:
             - name: HF_HOME
               value: "/models/.cache/huggingface"
@@ -62,15 +63,32 @@ spec:
       volumes:
         - name: model-cache
           persistentVolumeClaim:
-            claimName: {{ include "moondream-station.modelPvcName" . }}
+            claimName: {{ .Values.persistence.existingClaim | default (printf "%s-data" (include "moondream-station.fullname" .)) }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.affinity }}
       affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            preference:
+              matchExpressions:
+              - key: accelerator
+                operator: DoesNotExist
+          - weight: 100
+            preference:
+              matchExpressions:
+              - key: nvidia.com/gpu
+                operator: DoesNotExist
+          - weight: 100
+            preference:
+              matchExpressions:
+              - key: gpu.nvidia.com/class
+                operator: DoesNotExist
+        {{- with .Values.affinity }}
         {{- toYaml . | nindent 8 }}
-      {{- end }}
+        {{- end }}
       {{- with .Values.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}

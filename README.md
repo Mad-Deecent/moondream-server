@@ -75,75 +75,27 @@ To eliminate lengthy startup times when pods are rescheduled, the Helm chart inc
 
 ### How it Works
 
-1. **Kubernetes Job** downloads the model to a PersistentVolumeClaim during installation
+1. **Kubernetes Job** downloads the model to a shared PersistentVolumeClaim during installation
 2. **Application pods** mount the same PVC, accessing pre-downloaded models instantly
-3. **No startup delay** when pods move between nodes
-
-### Usage
-
-```bash
-# Install with model pre-loading (recommended)
-make helm-install-with-models
-
-# Monitor the download progress
-make helm-job-status
-make helm-job-logs
-
-# Regular install (models downloaded at runtime)
-make helm-install
-```
+3. **No startup delay** when pods move between nodes or restart
 
 ### Configuration
 
-Customize model pre-loading in `values.yaml`:
+The model pre-loading is configured under the unified `persistence` section in `values.yaml`:
 
 ```yaml
-modelCache:
+persistence:
   enabled: true
-  accessMode: ReadWriteMany # RWM for rolling deployments
+  storageClass: "nfs-nvme" # Storage class for PVC
+  accessMode: ReadWriteMany # RWM for rolling deployments and model sharing
   size: 20Gi
-  existingClaim: ""
-  modelRevision: "2025-06-21" # Optional, defaults to latest
+  existingClaim: "" # Optional: use existing PVC instead of creating new one
+
+  modelCache:
+    enabled: true # Download models to the PVC
+    modelRevision: "2025-06-21" # Model version to download
+    waitForCache: true # Wait for model download job to complete before starting pods
 ```
-
-## Makefile Commands
-
-The project includes a comprehensive Makefile for easy development and deployment:
-
-### Development
-
-- `make install` - Install Python dependencies
-- `make run` - Run the application locally
-- `make run-dev` - Run with hot reloading
-- `make test` - Run API test suite
-- `make dev-setup` - Set up development environment
-
-### Docker
-
-- `make build` - Build Docker image
-- `make docker-run` - Run in Docker with volume mounting
-- `make docker-run-dev` - Run in Docker with hot reloading
-- `make docker-stop` - Stop Docker containers
-- `make docker-logs` - View container logs
-- `make docker-volume-create` - Create Docker volume for model caching
-- `make docker-volume-info` - Show volume information
-- `make docker-volume-rm` - Remove Docker volume
-
-### Kubernetes
-
-- `make helm-install` - Install Helm chart
-- `make helm-install-with-models` - Install with model pre-loading
-- `make helm-uninstall` - Uninstall Helm chart
-- `make helm-upgrade` - Upgrade Helm chart
-- `make helm-job-status` - Check model download job status
-- `make helm-job-logs` - View model download job logs
-
-### Utilities
-
-- `make status` - Show service status
-- `make health` - Check service health
-- `make clean` - Clean up resources
-- `make help` - Show all available commands
 
 ## API Endpoints
 
@@ -182,6 +134,20 @@ curl -X POST "http://localhost:8080/v1/point" \
   -F "image=@your_image.jpg" \
   -F "object_name=car"
 ```
+
+### Testing
+
+Run the comprehensive test suite:
+
+```bash
+# Test all endpoints with a real image
+python app/test_api.py
+
+# Or use the Makefile
+make test
+```
+
+The test suite downloads a real image from Unsplash and tests all API endpoints to ensure proper functionality.
 
 ### Deploy to Kubernetes
 
