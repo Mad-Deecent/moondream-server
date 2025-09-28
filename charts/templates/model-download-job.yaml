@@ -2,16 +2,16 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ include "moondream-station.fullname" . }}-model-download
+  name: {{ include "moondream-server.fullname" . }}-model-download
   labels:
-    {{- include "moondream-station.labels" . | nindent 4 }}
+    {{- include "moondream-server.labels" . | nindent 4 }}
     app.kubernetes.io/component: model-download
   annotations: {}
 spec:
   template:
     metadata:
       labels:
-        {{- include "moondream-station.selectorLabels" . | nindent 8 }}
+        {{- include "moondream-server.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: model-download
     spec:
       restartPolicy: OnFailure
@@ -41,7 +41,7 @@ spec:
               
               print('Downloading Moondream model...')
               snapshot_download(
-                  repo_id="vikhyatk/moondream2",
+                  repo_id='${{ .Values.persistence.modelCache.repoId | default "vikhyatk/moondream2" }}',
                   revision='{{ .Values.persistence.modelCache.modelRevision | default "2025-06-21" }}',
                   local_dir=None,
                   local_dir_use_symlinks=False,
@@ -63,7 +63,7 @@ spec:
       volumes:
         - name: model-cache
           persistentVolumeClaim:
-            claimName: {{ .Values.persistence.existingClaim | default (printf "%s-data" (include "moondream-station.fullname" .)) }}
+            claimName: {{ .Values.persistence.existingClaim | default (printf "%s-data" (include "moondream-server.fullname" .)) }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

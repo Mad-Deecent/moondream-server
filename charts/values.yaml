@@ -12,8 +12,8 @@ image:
 imagePullSecrets:
   []
   # - name: ghcr-secret  # Uncomment if using private registry
-nameOverride: ""
-fullnameOverride: ""
+nameOverride: "moondream-server"
+fullnameOverride: "moondream-server"
 
 serviceAccount:
   # Specifies whether a service account should be created
@@ -22,7 +22,7 @@ serviceAccount:
   annotations: {}
   # The name of the service account to use.
   # If not set and create is true, a name is generated using the fullname template
-  name: ""
+  name: "moondream-server"
 
 podAnnotations: {}
 
@@ -54,21 +54,17 @@ externalService:
   annotations: {}
 
 ingress:
-  enabled: false
-  className: ""
-  annotations:
-    {}
-    # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
+  enabled: true
+  className: "tailscale"
+  annotations: {}
   hosts:
-    - host: moondream.local
+    - host: moondream.rockhopper-polaris.ts.net
       paths:
         - path: /
           pathType: Prefix
-  tls: []
-  #  - secretName: moondream-tls
-  #    hosts:
-  #      - moondream.local
+  tls:
+    - hosts:
+        - moondream.rockhopper-polaris.ts.net
 
 resources:
   requests:
@@ -107,6 +103,7 @@ persistence:
   # Prevents startup delay when pods move between nodes.
   modelCache:
     enabled: true # Download models to the PVC
+    repoId: "vikhyatk/moondream2" # Model repository ID
     modelRevision: "2025-06-21" # Latest model version
     waitForCache: true # Wait for model download job to complete before starting pods
 

@@ -2,9 +2,9 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ include "moondream-station.fullname" . }}-data
+  name: {{ include "moondream-server.fullname" . }}-data
   labels:
-    {{- include "moondream-station.labels" . | nindent 4 }}
+    {{- include "moondream-server.labels" . | nindent 4 }}
     app.kubernetes.io/component: storage
 spec:
   accessModes:
