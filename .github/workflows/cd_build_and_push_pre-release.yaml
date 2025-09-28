@@ -65,7 +65,7 @@ jobs:
           # A string to determine the format of the version output
           version_format: "${major}.${minor}.${patch}-prerelease${increment}"
           # Named version, will be used as suffix for name version tag
-          namespace: moondream-station
+          namespace: moondream-server
           # If this is set to true, *every* commit will be treated as a new version.
           bump_each_commit: false
           # If bump_each_commit is also set to true, setting this value will cause the version to increment only if the pattern specified is matched.
@@ -103,7 +103,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
 
       - name: Create Release
         id: create_release
