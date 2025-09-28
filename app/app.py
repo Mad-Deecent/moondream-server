@@ -58,11 +58,8 @@ async def lifespan(app: FastAPI):
     """Load model on startup"""
     global model
     repo_id = os.getenv("MODEL_REPO_ID", "vikhyatk/moondream2")
-    default_revision = "2025-06-21" if repo_id == "vikhyatk/moondream2" else None
-    revision_env = os.getenv("MODEL_REVISION")
-    revision = (revision_env if revision_env is not None else (default_revision or "")).strip()
+    revision = os.getenv("MODEL_REVISION")
     hf_token = os.getenv("HF_TOKEN")
-    reasoning = os.getenv("REASONING", "false")
     try:
         logger.info(
             "Loading Moondream model...",
