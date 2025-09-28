@@ -60,7 +60,7 @@ jobs:
           minor_pattern: "(MINOR)"
           minor_regexp_flags: ""
           version_format: "${major}.${minor}.${patch}"
-          namespace: moondream-station
+          namespace: moondream-server
           bump_each_commit: false
           bump_each_commit_patch_pattern: ""
           search_commit_body: false
@@ -90,7 +90,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
 
       - name: Create Release
         id: create_release

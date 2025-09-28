@@ -4,8 +4,9 @@ Moondream FastAPI Service
 A lightweight wrapper around Moondream transformers implementation
 """
 
-import os
+import inspect
 import logging
+import os
 from typing import Optional, List, Dict, Any
 from contextlib import asynccontextmanager
 
@@ -17,7 +18,7 @@ from pydantic import BaseModel
 from PIL import Image
 import io
 
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -56,8 +57,21 @@ class PointResponse(BaseModel):
 async def lifespan(app: FastAPI):
     """Load model on startup"""
     global model
+    repo_id = os.getenv("MODEL_REPO_ID", "vikhyatk/moondream2")
+    default_revision = "2025-06-21" if repo_id == "vikhyatk/moondream2" else None
+    revision_env = os.getenv("MODEL_REVISION")
+    revision = (revision_env if revision_env is not None else (default_revision or "")).strip()
+    hf_token = os.getenv("HF_TOKEN")
+    reasoning = os.getenv("REASONING", "false")
     try:
-        logger.info("Loading Moondream model...")
+        logger.info(
+            "Loading Moondream model...",
+        )
+        logger.info(
+            "Model source: %s@%s",
+            repo_id,
+            revision if revision else "latest",
+        )
         # Determine the best device
         # In Docker, MPS is not available, so we need to handle this properly
         if torch.cuda.is_available():
@@ -72,23 +86,38 @@ async def lifespan(app: FastAPI):
             device_map = None
             
         logger.info(f"Using device: {device}")
-        
+        # Shared kwargs for model loading
+        load_kwargs = {
+            "trust_remote_code": True,
+        }
+        if revision:
+            load_kwargs["revision"] = revision
+        if hf_token:
+            # Support private Hugging Face repos when a token is supplied
+            load_kwargs["token"] = hf_token
+            # Backwards compatibility with older transformers releases
+            load_kwargs["use_auth_token"] = hf_token
+
         # For CPU/Docker, we need to be more explicit about device handling
         if device == "cpu":
             model = AutoModelForCausalLM.from_pretrained(
-                "vikhyatk/moondream2",
-                revision=os.getenv("MODEL_REVISION", "2025-06-21"),
-                trust_remote_code=True,
+                repo_id,
+                **load_kwargs,
                 torch_dtype=torch.float32,  # Use float32 for CPU
                 device_map=None,
             )
         else:
             model = AutoModelForCausalLM.from_pretrained(
-                "vikhyatk/moondream2",
-                revision=os.getenv("MODEL_REVISION", "2025-06-21"),
-                trust_remote_code=True,
+                repo_id,
+                **load_kwargs,
                 device_map=device_map,
             )
+        if hasattr(model, "compile"):
+            try:
+                model.compile()
+                logger.info("Model compile() completed")
+            except Exception as compile_error:
+                logger.warning("Model compile() skipped: %s", compile_error)
         logger.info("Model loaded successfully")
         yield
     except Exception as e:
@@ -120,6 +149,28 @@ def load_image_from_bytes(image_bytes: bytes) -> Image.Image:
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Invalid image format: {e}")
 
+
+def invoke_model(skill_name: str, *args, **kwargs):
+    """Call a model skill, filtering kwargs based on the available signature."""
+    if model is None:
+        raise HTTPException(status_code=503, detail="Model not loaded")
+
+    skill = getattr(model, skill_name, None)
+    if not callable(skill):
+        raise HTTPException(status_code=500, detail=f"Model does not support '{skill_name}'")
+
+    try:
+        signature = inspect.signature(skill)
+        accepts_kwargs = any(param.kind == inspect.Parameter.VAR_KEYWORD for param in signature.parameters.values())
+        if not accepts_kwargs:
+            filtered_kwargs = {k: v for k, v in kwargs.items() if k in signature.parameters}
+        else:
+            filtered_kwargs = kwargs
+    except (TypeError, ValueError):
+        filtered_kwargs = kwargs
+
+    return skill(*args, **filtered_kwargs)
+
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
@@ -134,12 +185,10 @@ async def root():
 async def caption_image(
     image: UploadFile = File(...),
     length: str = Form("normal"),
-    stream: bool = Form(False)
+    stream: bool = Form(False),
+    reasoning: bool = Form(False)
 ):
     """Generate caption for an image"""
-    if model is None:
-        raise HTTPException(status_code=503, detail="Model not loaded")
-    
     if length not in ["short", "normal"]:
         raise HTTPException(status_code=400, detail="Length must be 'short' or 'normal'")
     
@@ -147,7 +196,13 @@ async def caption_image(
         image_bytes = await image.read()
         pil_image = load_image_from_bytes(image_bytes)
         
-        result = model.caption(pil_image, length=length, stream=stream)
+        result = invoke_model(
+            "caption",
+            pil_image,
+            length=length,
+            stream=stream,
+            reasoning=reasoning,
+        )
         return CaptionResponse(caption=result["caption"])
     
     except Exception as e:
@@ -158,12 +213,10 @@ async def caption_image(
 async def query_image(
     image: UploadFile = File(...),
     question: str = Form(...),
-    stream: bool = Form(False)
+    stream: bool = Form(False),
+    reasoning: bool = Form(False)
 ):
     """Answer a question about an image"""
-    if model is None:
-        raise HTTPException(status_code=503, detail="Model not loaded")
-    
     if not question.strip():
         raise HTTPException(status_code=400, detail="Question cannot be empty")
     
@@ -171,7 +224,13 @@ async def query_image(
         image_bytes = await image.read()
         pil_image = load_image_from_bytes(image_bytes)
         
-        result = model.query(pil_image, question, stream=stream)
+        result = invoke_model(
+            "query",
+            pil_image,
+            question,
+            stream=stream,
+            reasoning=reasoning,
+        )
         return QueryResponse(answer=result["answer"])
     
     except Exception as e:
@@ -181,12 +240,10 @@ async def query_image(
 @app.post("/v1/detect", response_model=DetectResponse)
 async def detect_objects(
     image: UploadFile = File(...),
-    object_name: str = Form(...)
+    object_name: str = Form(...),
+    reasoning: bool = Form(False)
 ):
     """Detect objects in an image"""
-    if model is None:
-        raise HTTPException(status_code=503, detail="Model not loaded")
-    
     if not object_name.strip():
         raise HTTPException(status_code=400, detail="Object name cannot be empty")
     
@@ -194,7 +251,12 @@ async def detect_objects(
         image_bytes = await image.read()
         pil_image = load_image_from_bytes(image_bytes)
         
-        result = model.detect(pil_image, object_name)
+        result = invoke_model(
+            "detect",
+            pil_image,
+            object_name,
+            reasoning=reasoning,
+        )
         return DetectResponse(objects=result["objects"])
     
     except Exception as e:
@@ -204,12 +266,10 @@ async def detect_objects(
 @app.post("/v1/point", response_model=PointResponse)
 async def point_objects(
     image: UploadFile = File(...),
-    object_name: str = Form(...)
+    object_name: str = Form(...),
+    reasoning: bool = Form(False)
 ):
     """Locate objects in an image"""
-    if model is None:
-        raise HTTPException(status_code=503, detail="Model not loaded")
-    
     if not object_name.strip():
         raise HTTPException(status_code=400, detail="Object name cannot be empty")
     
@@ -217,7 +277,12 @@ async def point_objects(
         image_bytes = await image.read()
         pil_image = load_image_from_bytes(image_bytes)
         
-        result = model.point(pil_image, object_name)
+        result = invoke_model(
+            "point",
+            pil_image,
+            object_name,
+            reasoning=reasoning,
+        )
         return PointResponse(points=result["points"])
     
     except Exception as e:
@@ -234,5 +299,3 @@ if __name__ == "__main__":
         port=int(os.getenv("PORT", 8080)),
         reload=reload
     )
-
-
