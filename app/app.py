@@ -56,6 +56,9 @@ class PointResponse(BaseModel):
 async def lifespan(app: FastAPI):
     """Load model on startup"""
     global model
+    repo_id = os.getenv("MODEL_REPO_ID", "vikhyatk/moondream2")
+    revision = os.getenv("MODEL_REVISION", "2025-06-21")
+    reasoning = os.getenv("REASONING", "false")
     try:
         logger.info("Loading Moondream model...")
         # Determine the best device
@@ -72,20 +75,19 @@ async def lifespan(app: FastAPI):
             device_map = None
             
         logger.info(f"Using device: {device}")
-        
         # For CPU/Docker, we need to be more explicit about device handling
         if device == "cpu":
             model = AutoModelForCausalLM.from_pretrained(
-                "vikhyatk/moondream2",
-                revision=os.getenv("MODEL_REVISION", "2025-06-21"),
+                repo_id,
+                revision=revision,
                 trust_remote_code=True,
                 torch_dtype=torch.float32,  # Use float32 for CPU
                 device_map=None,
             )
         else:
             model = AutoModelForCausalLM.from_pretrained(
-                "vikhyatk/moondream2",
-                revision=os.getenv("MODEL_REVISION", "2025-06-21"),
+                repo_id,
+                revision=revision,
                 trust_remote_code=True,
                 device_map=device_map,
             )
@@ -134,7 +136,8 @@ async def root():
 async def caption_image(
     image: UploadFile = File(...),
     length: str = Form("normal"),
-    stream: bool = Form(False)
+    stream: bool = Form(False),
+    reasoning: bool = Form(False)
 ):
     """Generate caption for an image"""
     if model is None:
@@ -147,7 +150,7 @@ async def caption_image(
         image_bytes = await image.read()
         pil_image = load_image_from_bytes(image_bytes)
         
-        result = model.caption(pil_image, length=length, stream=stream)
+        result = model.caption(pil_image, length=length, stream=stream, reasoning=reasoning)
         return CaptionResponse(caption=result["caption"])
     
     except Exception as e:
@@ -158,7 +161,8 @@ async def caption_image(
 async def query_image(
     image: UploadFile = File(...),
     question: str = Form(...),
-    stream: bool = Form(False)
+    stream: bool = Form(False),
+    reasoning: bool = Form(False)
 ):
     """Answer a question about an image"""
     if model is None:
@@ -171,7 +175,7 @@ async def query_image(
         image_bytes = await image.read()
         pil_image = load_image_from_bytes(image_bytes)
         
-        result = model.query(pil_image, question, stream=stream)
+        result = model.query(pil_image, question, stream=stream, reasoning=reasoning)
         return QueryResponse(answer=result["answer"])
     
     except Exception as e:
@@ -181,7 +185,8 @@ async def query_image(
 @app.post("/v1/detect", response_model=DetectResponse)
 async def detect_objects(
     image: UploadFile = File(...),
-    object_name: str = Form(...)
+    object_name: str = Form(...),
+    reasoning: bool = Form(False)
 ):
     """Detect objects in an image"""
     if model is None:
@@ -194,7 +199,7 @@ async def detect_objects(
         image_bytes = await image.read()
         pil_image = load_image_from_bytes(image_bytes)
         
-        result = model.detect(pil_image, object_name)
+        result = model.detect(pil_image, object_name, reasoning=reasoning)
         return DetectResponse(objects=result["objects"])
     
     except Exception as e:
@@ -204,7 +209,8 @@ async def detect_objects(
 @app.post("/v1/point", response_model=PointResponse)
 async def point_objects(
     image: UploadFile = File(...),
-    object_name: str = Form(...)
+    object_name: str = Form(...),
+    reasoning: bool = Form(False)
 ):
     """Locate objects in an image"""
     if model is None:
@@ -217,7 +223,7 @@ async def point_objects(
         image_bytes = await image.read()
         pil_image = load_image_from_bytes(image_bytes)
         
-        result = model.point(pil_image, object_name)
+        result = model.point(pil_image, object_name, reasoning=reasoning)
         return PointResponse(points=result["points"])
     
     except Exception as e:
