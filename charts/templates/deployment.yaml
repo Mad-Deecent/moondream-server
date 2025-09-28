@@ -85,6 +85,14 @@ spec:
             - name: {{ $key }}
               value: {{ $value | quote }}
             {{- end }}
+            {{- $hfSecret := .Values.persistence.modelCache.huggingfaceSecretName | default "" }}
+            {{- if $hfSecret }}
+            - name: HF_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $hfSecret }}
+                  key: token
+            {{- end }}
           {{- with .Values.envFrom }}
           envFrom:
             {{- toYaml . | nindent 12 }}
