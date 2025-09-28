@@ -76,8 +76,9 @@ async def lifespan(app: FastAPI):
         # For CPU/Docker, we need to be more explicit about device handling
         if device == "cpu":
             model = AutoModelForCausalLM.from_pretrained(
-                "vikhyatk/moondream2",
-                revision=os.getenv("MODEL_REVISION", "2025-06-21"),
+                # "vikhyatk/moondream2",
+                "moondream/moondream3-preview",
+                # revision=os.getenv("MODEL_REVISION", "2025-06-21"),
                 trust_remote_code=True,
                 torch_dtype=torch.float32,  # Use float32 for CPU
                 device_map=None,
