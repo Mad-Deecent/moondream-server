@@ -60,7 +60,7 @@ jobs:
           minor_pattern: "(MINOR)"
           minor_regexp_flags: ""
           version_format: "${major}.${minor}.${patch}"
-          namespace: moondream-station
+          namespace: moonstream-server
           bump_each_commit: false
           bump_each_commit_patch_pattern: ""
           search_commit_body: false

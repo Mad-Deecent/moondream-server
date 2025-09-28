@@ -1,5 +1,5 @@
 1. Port forward to access the service:
-   kubectl port-forward --namespace {{ .Release.Namespace }} svc/{{ include "moondream-station.fullname" . }} 8080:{{ .Values.service.port }}
+   kubectl port-forward --namespace {{ .Release.Namespace }} svc/{{ include "moonstream-server.fullname" . }} 8080:{{ .Values.service.port }}
 
 2. Test the API:
    curl http://localhost:8080/health

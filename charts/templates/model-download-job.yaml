@@ -2,16 +2,16 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ include "moondream-station.fullname" . }}-model-download
+  name: {{ include "moonstream-server.fullname" . }}-model-download
   labels:
-    {{- include "moondream-station.labels" . | nindent 4 }}
+    {{- include "moonstream-server.labels" . | nindent 4 }}
     app.kubernetes.io/component: model-download
   annotations: {}
 spec:
   template:
     metadata:
       labels:
-        {{- include "moondream-station.selectorLabels" . | nindent 8 }}
+        {{- include "moonstream-server.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: model-download
     spec:
       restartPolicy: OnFailure
@@ -63,7 +63,7 @@ spec:
       volumes:
         - name: model-cache
           persistentVolumeClaim:
-            claimName: {{ .Values.persistence.existingClaim | default (printf "%s-data" (include "moondream-station.fullname" .)) }}
+            claimName: {{ .Values.persistence.existingClaim | default (printf "%s-data" (include "moonstream-server.fullname" .)) }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
