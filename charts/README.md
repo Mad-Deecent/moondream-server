@@ -11,10 +11,10 @@ A Helm chart for deploying Moondream Station vision-language model server on Kub
 
 ## Installing the Chart
 
-To install the chart with the release name `moonstream-server`:
+To install the chart with the release name `moondream-server`:
 
 ```bash
-helm install moonstream-server ./charts/moondream
+helm install moondream-server ./charts/moondream
 ```
 
 The command deploys Moondream Station on the Kubernetes cluster in the default configuration. The [Parameters](#parameters) section lists the parameters that can be configured during installation.
@@ -23,10 +23,10 @@ The command deploys Moondream Station on the Kubernetes cluster in the default c
 
 ## Uninstalling the Chart
 
-To uninstall/delete the `moonstream-server` deployment:
+To uninstall/delete the `moondream-server` deployment:
 
 ```bash
-helm delete moonstream-server
+helm delete moondream-server
 ```
 
 The command removes all the Kubernetes components associated with the chart and deletes the release.
@@ -43,11 +43,11 @@ The command removes all the Kubernetes components associated with the chart and 
 
 ### Image parameters
 
-| Name               | Description                                        | Value               |
-| ------------------ | -------------------------------------------------- | ------------------- |
-| `image.repository` | Moondream Station image repository                 | `moonstream-server` |
-| `image.tag`        | Moondream Station image tag (overrides appVersion) | `"latest"`          |
-| `image.pullPolicy` | Moondream Station image pull policy                | `Always`            |
+| Name               | Description                                        | Value              |
+| ------------------ | -------------------------------------------------- | ------------------ |
+| `image.repository` | Moondream Station image repository                 | `moondream-server` |
+| `image.tag`        | Moondream Station image tag (overrides appVersion) | `"latest"`         |
+| `image.pullPolicy` | Moondream Station image pull policy                | `Always`           |
 
 ### GPU Configuration
 
@@ -119,7 +119,7 @@ helm install my-moondream ./charts/moondream
 
 ```bash
 helm install my-moondream ./charts/moondream \
-  --set image.repository=my-registry/moonstream-server \
+  --set image.repository=my-registry/moondream-server \
   --set image.tag=v1.0.0 \
   --set resources.requests.memory=4Gi \
   --set persistence.size=20Gi
@@ -216,7 +216,7 @@ If the image cannot be pulled:
 replicaCount: 1
 
 image:
-  repository: my-registry.com/moonstream-server
+  repository: my-registry.com/moondream-server
   tag: "v1.2.0"
   pullPolicy: IfNotPresent
 

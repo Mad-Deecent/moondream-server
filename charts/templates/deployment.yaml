@@ -1,16 +1,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "moonstream-server.fullname" . }}
+  name: {{ include "moondream-server.fullname" . }}
   labels:
-    {{- include "moonstream-server.labels" . | nindent 4 }}
+    {{- include "moondream-server.labels" . | nindent 4 }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
   selector:
     matchLabels:
-      {{- include "moonstream-server.selectorLabels" . | nindent 6 }}
+      {{- include "moondream-server.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -18,13 +18,13 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "moonstream-server.selectorLabels" . | nindent 8 }}
+        {{- include "moondream-server.selectorLabels" . | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "moonstream-server.serviceAccountName" . }}
+      serviceAccountName: {{ include "moondream-server.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       {{- if .Values.gpu.enabled }}
@@ -124,7 +124,7 @@ spec:
         {{- if .Values.persistence.enabled }}
         - name: moondream-data
           persistentVolumeClaim:
-            claimName: {{ .Values.persistence.existingClaim | default (printf "%s-data" (include "moonstream-server.fullname" .)) }}
+            claimName: {{ .Values.persistence.existingClaim | default (printf "%s-data" (include "moondream-server.fullname" .)) }}
         {{- end }}
         {{- if .Values.shm.enabled }}
         - name: shm

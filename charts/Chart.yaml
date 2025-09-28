@@ -1,5 +1,5 @@
 apiVersion: v2
-name: moonstream-server
+name: moondream-server
 description: A Helm chart for Moondream Station vision-language model server
 type: application
 version: 0.1.0
@@ -12,4 +12,3 @@ keywords:
 home: https://moondream.ai/station
 sources:
   - https://github.com/vikhyat/moondream
-

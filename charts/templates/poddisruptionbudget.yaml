@@ -2,9 +2,9 @@
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
-  name: {{ include "moonstream-server.fullname" . }}
+  name: {{ include "moondream-server.fullname" . }}
   labels:
-    {{- include "moonstream-server.labels" . | nindent 4 }}
+    {{- include "moondream-server.labels" . | nindent 4 }}
 spec:
   {{- if .Values.podDisruptionBudget.minAvailable }}
   minAvailable: {{ .Values.podDisruptionBudget.minAvailable }}
@@ -14,5 +14,5 @@ spec:
   {{- end }}
   selector:
     matchLabels:
-      {{- include "moonstream-server.selectorLabels" . | nindent 6 }}
+      {{- include "moondream-server.selectorLabels" . | nindent 6 }}
 {{- end }}
