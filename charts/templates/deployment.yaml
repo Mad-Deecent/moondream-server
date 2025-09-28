@@ -74,8 +74,11 @@ spec:
               containerPort: {{ .Values.config.port }}
               protocol: TCP
           env:
+            {{- $modelRevision := .Values.persistence.modelCache.modelRevision | default "" }}
+            {{- if $modelRevision }}
             - name: MODEL_REVISION
-              value: {{ .Values.persistence.modelCache.modelRevision | quote }}
+              value: {{ $modelRevision | quote }}
+            {{- end }}
             - name: PORT
               value: {{ .Values.config.port | quote }}
             {{- range $key, $value := .Values.env }}

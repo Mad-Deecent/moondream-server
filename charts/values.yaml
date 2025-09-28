@@ -7,11 +7,12 @@ replicaCount: 1
 image:
   repository: ghcr.io/mad-deecent/moondream-server
   pullPolicy: Always
-  tag: "latest"
+  tag: "moondream3"
 
 imagePullSecrets:
-  []
-  # - name: ghcr-secret  # Uncomment if using private registry
+  - name: ghcr-secret
+  - name: kubeai-huggingface
+
 nameOverride: "moondream-server"
 fullnameOverride: "moondream-server"
 
@@ -104,9 +105,9 @@ persistence:
   modelCache:
     enabled: true # Download models to the PVC
     repoId: "moondream/moondream3-preview" # Model repository ID
-    modelRevision: "2025-06-21" # Latest model version
+    modelRevision: "" # Latest model version (omitted for preview)
     waitForCache: true # Wait for model download job to complete before starting pods
-
+    huggingfaceSecretName: kubeai-huggingface # Secret name to store Hugging Face token
 # Shared memory for ML workloads
 shm:
   enabled: true
@@ -122,9 +123,7 @@ config:
 # Environment variables
 env:
   MODEL_REPO_ID: "moondream/moondream3-preview"
-  MODEL_REVISION: ""
   REASONING: "false"
-  # CUSTOM_VAR: "value"
 
 # Additional environment variables from ConfigMap/Secret
 envFrom: []
