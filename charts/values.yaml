@@ -103,7 +103,7 @@ persistence:
   # Prevents startup delay when pods move between nodes.
   modelCache:
     enabled: true # Download models to the PVC
-    repoId: "vikhyatk/moondream2" # Model repository ID
+    repoId: "moondream/moondream3-preview" # Model repository ID
     modelRevision: "2025-06-21" # Latest model version
     waitForCache: true # Wait for model download job to complete before starting pods
 
@@ -121,7 +121,9 @@ config:
 
 # Environment variables
 env:
-  {}
+  MODEL_REPO_ID: "moondream/moondream3-preview"
+  MODEL_REVISION: ""
+  REASONING: "false"
   # CUSTOM_VAR: "value"
 
 # Additional environment variables from ConfigMap/Secret
