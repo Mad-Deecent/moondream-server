@@ -132,7 +132,7 @@ The test suite downloads a real image from Unsplash and tests all API endpoints 
 ### Deploy to Kubernetes
 
 ```bash
-helm install moondream-station oci://ghcr.io/mad-deecent/charts/moondream-station \
+helm install moondream-server oci://ghcr.io/mad-deecent/charts/moondream-server \
   --namespace moondream --create-namespace
 ```
 
@@ -141,7 +141,7 @@ Or install from source:
 ```bash
 git clone https://github.com/Mad-Deecent/moondream-server.git
 cd moondream-server
-helm install moondream-station ./charts --namespace moondream --create-namespace
+helm install moondream-server ./charts --namespace moondream --create-namespace
 ```
 
 ## Configuration
@@ -174,7 +174,7 @@ resources:
 ### Custom namespace
 
 ```bash
-helm install moondream-station ./charts \
+helm install moondream-server ./charts \
   --namespace <my-namespace> \
   --create-namespace
 ```
