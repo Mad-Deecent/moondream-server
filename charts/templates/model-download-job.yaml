@@ -43,7 +43,7 @@ spec:
               snapshot_download(
                   repo_id="{{ .Values.persistence.modelCache.repoId | default "vikhyatk/moondream2" }}",
                   {{- if ne (.Values.persistence.modelCache.repoId | default "vikhyatk/moondream2") "moondream/moondream3-preview" }}
-                  revision="{{ .Values.persistence.modelCache.modelRevision | default "2025-06-21" }}",
+                  revision="{{ .Values.persistence.modelCache.modelRevision | default "" }}",
                   {{- end }}
                   local_dir=None,
                   local_dir_use_symlinks=False,

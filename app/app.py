@@ -102,12 +102,14 @@ async def lifespan(app: FastAPI):
                 **load_kwargs,
                 torch_dtype=torch.float32,  # Use float32 for CPU
                 device_map=None,
+                token=hf_token,
             )
         else:
             model = AutoModelForCausalLM.from_pretrained(
                 repo_id,
                 **load_kwargs,
                 device_map=device_map,
+                token=hf_token,
             )
         if hasattr(model, "compile"):
             try:
