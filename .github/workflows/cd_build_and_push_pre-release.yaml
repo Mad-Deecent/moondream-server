@@ -26,28 +26,21 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  build:
+  setup:
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
       id-token: write
-
+    outputs:
+      version: ${{ steps.semantic-version-pre.outputs.version }}
+      tags: ${{ steps.meta.outputs.tags }}
+      labels: ${{ steps.meta.outputs.labels }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log into registry ${{ env.REGISTRY }}
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GH_TOKEN }}
 
       - name: Pre-release Semantic Version
         uses: paulhatch/semantic-version@v5.4.0
@@ -93,17 +86,40 @@ jobs:
             type=raw,value=${{ steps.semantic-version-pre.outputs.version }},enable={{is_not_default_branch}}
             type=raw,value=latest,enable={{is_default_branch}}
 
+  build-and-push:
+    runs-on: ubuntu-latest
+    needs: setup
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    strategy:
+      matrix:
+        platform:
+          - linux/amd64
+          - linux/arm64
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log into registry ${{ env.REGISTRY }}
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GH_TOKEN }}
+
       - name: Build and push Docker image
         id: build-and-push
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ needs.setup.outputs.tags }}
+          labels: ${{ needs.setup.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          platforms: linux/amd64
+          platforms: ${{ matrix.platform }}
 
       - name: Create Release
         id: create_release
@@ -111,7 +127,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         with:
-          tag_name: ${{ steps.semantic-version-pre.outputs.version }}
-          release_name: Release ${{ steps.semantic-version-pre.outputs.version }}
+          tag_name: ${{ needs.setup.outputs.version }}
+          release_name: Release ${{ needs.setup.outputs.version }}
           draft: false
           prerelease: true

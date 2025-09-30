@@ -59,6 +59,8 @@ async def lifespan(app: FastAPI):
     global model
     repo_id = os.getenv("MODEL_REPO_ID", "vikhyatk/moondream2")
     revision = os.getenv("MODEL_REVISION")
+    if revision == "":
+        revision = None
     hf_token = os.getenv("HF_TOKEN")
     try:
         logger.info(
@@ -92,8 +94,6 @@ async def lifespan(app: FastAPI):
         if hf_token:
             # Support private Hugging Face repos when a token is supplied
             load_kwargs["token"] = hf_token
-            # Backwards compatibility with older transformers releases
-            load_kwargs["use_auth_token"] = hf_token
 
         # For CPU/Docker, we need to be more explicit about device handling
         if device == "cpu":
@@ -102,14 +102,12 @@ async def lifespan(app: FastAPI):
                 **load_kwargs,
                 torch_dtype=torch.float32,  # Use float32 for CPU
                 device_map=None,
-                token=hf_token,
             )
         else:
             model = AutoModelForCausalLM.from_pretrained(
                 repo_id,
                 **load_kwargs,
                 device_map=device_map,
-                token=hf_token,
             )
         if hasattr(model, "compile"):
             try:
