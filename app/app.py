@@ -7,7 +7,7 @@ A lightweight wrapper around Moondream transformers implementation
 import inspect
 import logging
 import os
-from typing import Optional, List, Dict, Any
+from typing import List, Dict, Any
 from contextlib import asynccontextmanager
 
 import torch
