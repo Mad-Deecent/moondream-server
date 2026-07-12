@@ -41,9 +41,9 @@ spec:
               
               print('Downloading Moondream model...')
               snapshot_download(
-                  repo_id="{{ .Values.persistence.modelCache.repoId | default "vikhyatk/moondream2" }}",
-                  {{- if ne (.Values.persistence.modelCache.repoId | default "vikhyatk/moondream2") "moondream/moondream3-preview" }}
-                  revision="{{ .Values.persistence.modelCache.modelRevision | default "" }}",
+                  repo_id="{{ .Values.persistence.modelCache.repoId | default "moondream/moondream3.1-9B-A2B" }}",
+                  {{- if .Values.persistence.modelCache.modelRevision }}
+                  revision="{{ .Values.persistence.modelCache.modelRevision }}",
                   {{- end }}
                   local_dir=None,
                   local_dir_use_symlinks=False,

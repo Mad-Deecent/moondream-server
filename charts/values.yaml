@@ -104,8 +104,8 @@ persistence:
   # Prevents startup delay when pods move between nodes.
   modelCache:
     enabled: true # Download models to the PVC
-    repoId: "moondream/moondream3-preview" # Model repository ID
-    modelRevision: "" # Latest model version (omitted for preview)
+    repoId: "moondream/moondream3.1-9B-A2B" # Model repository ID
+    modelRevision: "" # Latest model version (empty = latest)
     waitForCache: true # Wait for model download job to complete before starting pods
     huggingfaceSecretName: kubeai-huggingface # Secret name to store Hugging Face token
 # Shared memory for ML workloads
@@ -122,8 +122,7 @@ config:
 
 # Environment variables
 env:
-  MODEL_REPO_ID: "moondream/moondream3-preview"
-  MODEL_REVISION: ""
+  MODEL_REPO_ID: "moondream/moondream3.1-9B-A2B"
   REASONING: "false"
 
 # Additional environment variables from ConfigMap/Secret

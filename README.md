@@ -1,6 +1,6 @@
 # Moondream Server
 
-A lightweight wrapper around the Moondream2 transformers implementation, providing clean REST API endpoints for vision-language model capabilities.
+A lightweight wrapper around the Moondream client (Photon inference engine), defaulting to Moondream 3.1, providing clean REST API endpoints for vision-language model capabilities.
 
 This replaces the complex Moondream Station binary with a simple, maintainable Python service that exposes the core Moondream capabilities through a REST API.
 
@@ -44,13 +44,12 @@ The service will be available at `http://localhost:8080`
 
 ## Important Notes
 
-### Docker on macOS
+### Hardware Requirements
 
-When running in Docker on macOS, the service will automatically use CPU mode since Docker doesn't support MPS (Metal Performance Shaders) passthrough yet. This is normal and expected behavior.
+Inference runs through Moondream's Photon engine, which requires an NVIDIA GPU (Ampere or newer) or an Apple Silicon Mac. There is no CPU fallback.
 
-- **Local development**: Uses MPS for GPU acceleration on Apple Silicon
-- **Docker**: Falls back to CPU mode automatically
-- **Linux with NVIDIA GPU**: Uses CUDA when available
+- **Local development on Apple Silicon**: Uses native Metal kernels
+- **Linux with NVIDIA GPU**: Uses custom CUDA kernels (Docker requires the NVIDIA container runtime)
 
 ## Model Pre-loading for Kubernetes
 

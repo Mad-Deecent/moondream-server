@@ -1,0 +1,35 @@
+name: CI
+
+# PR-time proof that the image still builds — a broken Dockerfile or
+# requirements change is caught here instead of in CD after merge. No push,
+# no registry login, no secrets. Shares the gha layer cache with CD, so a
+# green PR build also warms the cache CD reads.
+
+on:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.repository }}-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  docker-build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          platforms: linux/amd64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

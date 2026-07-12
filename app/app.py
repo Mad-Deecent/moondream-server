@@ -10,15 +10,13 @@ import os
 from typing import List, Dict, Any
 from contextlib import asynccontextmanager
 
-import torch
+import moondream as md
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from PIL import Image
 import io
-
-from transformers import AutoModelForCausalLM
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -57,64 +55,22 @@ class PointResponse(BaseModel):
 async def lifespan(app: FastAPI):
     """Load model on startup"""
     global model
-    repo_id = os.getenv("MODEL_REPO_ID", "vikhyatk/moondream2")
-    revision = os.getenv("MODEL_REVISION")
-    if revision == "":
-        revision = None
-    hf_token = os.getenv("HF_TOKEN")
+    # Photon takes a model name, not an HF repo id; accept MODEL_REPO_ID for
+    # backward compatibility by stripping the org prefix.
+    model_name = os.getenv("MODEL_NAME") or os.getenv(
+        "MODEL_REPO_ID", "moondream/moondream3.1-9B-A2B"
+    ).split("/")[-1]
+    api_key = os.getenv("MOONDREAM_API_KEY")
     try:
-        logger.info(
-            "Loading Moondream model...",
-        )
-        logger.info(
-            "Model source: %s@%s",
-            repo_id,
-            revision if revision else "latest",
-        )
-        # Determine the best device
-        # In Docker, MPS is not available, so we need to handle this properly
-        if torch.cuda.is_available():
-            device = "cuda"
-            device_map = {"": "cuda"}
-        elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available() and not os.path.exists('/.dockerenv'):
-            # Only use MPS if not running in Docker
-            device = "mps"
-            device_map = {"": "mps"}
-        else:
-            device = "cpu"
-            device_map = None
-            
-        logger.info(f"Using device: {device}")
-        # Shared kwargs for model loading
-        load_kwargs = {
-            "trust_remote_code": True,
-        }
-        if revision:
-            load_kwargs["revision"] = revision
-        if hf_token:
-            # Support private Hugging Face repos when a token is supplied
-            load_kwargs["token"] = hf_token
+        logger.info("Loading Moondream model...")
+        logger.info("Model: %s (local via Photon)", model_name)
 
-        # For CPU/Docker, we need to be more explicit about device handling
-        if device == "cpu":
-            model = AutoModelForCausalLM.from_pretrained(
-                repo_id,
-                **load_kwargs,
-                torch_dtype=torch.float32,  # Use float32 for CPU
-                device_map=None,
-            )
-        else:
-            model = AutoModelForCausalLM.from_pretrained(
-                repo_id,
-                **load_kwargs,
-                device_map=device_map,
-            )
-        if hasattr(model, "compile"):
-            try:
-                model.compile()
-                logger.info("Model compile() completed")
-            except Exception as compile_error:
-                logger.warning("Model compile() skipped: %s", compile_error)
+        load_kwargs = {"local": True, "model": model_name}
+        if api_key:
+            # Only required for finetunes; base models run without a key
+            load_kwargs["api_key"] = api_key
+
+        model = md.vl(**load_kwargs)
         logger.info("Model loaded successfully")
         yield
     except Exception as e:
