@@ -10,7 +10,7 @@
 
 ## Build, Test, and Development Commands
 - `python -m venv .venv && source .venv/bin/activate` isolates dependencies.
-- `pip install -r app/requirements.txt` installs FastAPI, transformers, and optional GPU extras.
+- `pip install -r app/requirements.txt` installs FastAPI and the `moondream` client (Photon local inference).
 - `uvicorn app.app:app --reload --port 8080` is the preferred dev loop; it honours `RELOAD=true`.
 - `python -m app.app` mirrors the container entrypoint for quick smoke tests.
 - `docker build -t moondream-api .` then `docker run -p 8080:8080 moondream-api` validates the image pipeline.
@@ -32,6 +32,6 @@
 - PRs should explain model or infrastructure touchpoints, list test evidence (`python app/test_api.py`), and include screenshots or `curl` snippets for API-affecting changes.
 
 ## Deployment & Configuration Tips
-- `MODEL_REPO_ID`, `MODEL_REVISION`, `REASONING`, `RELOAD`, and `PORT` drive runtime behaviour; document overrides in PRs.
+- `MODEL_NAME` (or legacy `MODEL_REPO_ID`), `MOONDREAM_API_KEY` (finetunes only), `REASONING`, `RELOAD`, and `PORT` drive runtime behaviour; document overrides in PRs.
 - Update `charts/values.yaml` and the Docker image tag together so the Helm release matches the packaged revision.
 - CI images run as the `moondream` user; adjust file ownership in the Dockerfile when introducing new assets.

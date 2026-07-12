@@ -2,9 +2,10 @@ FROM python:3.11-slim
 
 LABEL org.opencontainers.image.source=https://github.com/Mad-Deecent/moondream-server
 
-# Install system dependencies
+# Install system dependencies (git is needed for the git-pinned kestrel dep)
 RUN apt-get update && apt-get install -y \
     curl \
+    git \
     ca-certificates \
     libglib2.0-0 \
     libgl1 \
